@@ -1,6 +1,6 @@
 /*==============================================================================
- Project: Intro-5-Analog-Input          Activity: mirobo.tech/chrp4-intro-5
- Date:    May 16, 2023
+ Project: Intro-5-Analog-Input          Activity: mirobo.tech/intro-5
+ Date:    August 11, 2023
  
  This introductory programming activity for the mirobo.tech CHRP4 demonstrates
  analog input, number base conversion, and the use of a simple, external serial
@@ -77,7 +77,7 @@ int main(void)
     
     // Turn on one of floor LEDs (D6 - D8) and select one of phototransistors
     // (Q1 - Q4) as the ADC input (enable only if the components are installed)
-    // D6 = 1;                      // Turn on LED D6 to..
+    // D6 = 1;                      // Turn on LED D6 and...
     // ADC_select_channel(ANQ1);    // read the light level on Q1 or Q2
     
     while(1)
