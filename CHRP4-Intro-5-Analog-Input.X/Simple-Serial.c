@@ -1,6 +1,6 @@
 /*==============================================================================
  Library:   SimpleSerial
- Date:      May 16, 2023
+ Date:      December 12, 2023
  
  Simple 9600 bits-per-second (bps) serial output example function. Sets up 
  header H1 for RS-232-style serial data output and writes bits by manipulating
@@ -25,8 +25,8 @@ void H1_serial_config(void)
     H1OUT = 1;
 }
 
-// Write one byte of 9600,8,N,1 serial data (9600 bps, 8 data bits, no parity, 1
-// stop git) to H1
+// Write one byte of 9600,8,N,1 serial data (9600 bps, 8 data bits, no parity,
+// and 1 stop bit) to H1
 void H1_serial_write(unsigned char data)
 {
     // Write the Start bit (0)

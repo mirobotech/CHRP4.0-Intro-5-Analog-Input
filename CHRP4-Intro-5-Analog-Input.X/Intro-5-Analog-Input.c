@@ -1,15 +1,17 @@
 /*==============================================================================
  Project: Intro-5-Analog-Input          Activity: mirobo.tech/intro-5
- Date:    August 11, 2023
+ Date:    December 12, 2023
  
- This introductory programming activity for the mirobo.tech CHRP4 demonstrates
- analog input, number base conversion, and the use of a simple, external serial
- output function library. (Serial output is a useful technique for debugging
- using a logic analyzer, or digital oscilloscope with a serial decode function.)
+ This introductory programming activity for the mirobo.tech CHRP4 and UBMP4
+ demonstrates analog input, number base conversion, and the use of a simple,
+ external serial output function library. (Serial output is a useful technique
+ for debugging using a digital oscilloscope with a serial decode function, or
+ a digital logic analyzer.)
  
- Additional program analysis activities investigate the use and operation of the
- analog constants and input functions in the included files, as well as explore
- bit-wise AND operations for selectively clearing and testing bits.
+ Additional program analysis activities investigate the use and operation of
+ analog constants and functions in the included files, explore bit-wise logical
+ operations for testing and selectively modifying bits, utilize analog data
+ in other functions, and develop strategies for receiving serial data.
 ==============================================================================*/
 
 #include    "xc.h"              // Microchip XC8 compiler include file
@@ -64,25 +66,25 @@ int main(void)
     H1_serial_config();         // Prepare for serial output on H1
         
     // If Q1 - Q4 are not installed, all PORTC outputs can be enabled for
-    // debugging by multimeter by uncommenting the line below:
+    // debugging using a multimeter by uncommenting the line below:
     // TRISC = 0b00000000;
     
-    // Enable on-die temperature sensor and set high operating Vdd range
+    // Enable the on-die temperature sensor and set high operating Vdd range
     FVRCON = FVRCON | 0b00110000;
     
-    // Select the on-die temperature indicator module as ADC input and wait
+    // Select the on-die temperature indicator module as the ADC input and wait
     // for the recommended acquisition time before A-D conversion
     ADC_select_channel(ANTIM);
     __delay_us(200);
     
-    // Turn on one of floor LEDs (D6 - D8) and select one of phototransistors
-    // (Q1 - Q4) as the ADC input (enable only if the components are installed)
-    // D6 = 1;                      // Turn on LED D6 and...
-    // ADC_select_channel(ANQ1);    // read the light level on Q1 or Q2
+    // If the components are installed, turn on one of floor LEDs (D6 - D8) and
+    // select one of phototransistors (Q1 - Q4) as the ADC input
+    // D6 = 1;                      // Turn LED D6 on and...
+    // ADC_select_channel(ANQ1);    // read the light level on Q1
     
     while(1)
     {
-        // Read selected ADC channel and output the analog result on the IC pins
+        // Read selected ADC input and output the result on the PORTC pins
         rawADC = ADC_read();
         LATC = rawADC;
               
@@ -90,7 +92,7 @@ int main(void)
         
         __delay_ms(100);
         
-        // Activate bootloader if SW1 is pressed.
+        // Reset the microcontroller and start the bootloader if SW1 is pressed.
         if(SW1 == 0)
         {
             RESET();
@@ -100,69 +102,67 @@ int main(void)
 
 /* Learn More -- Program Analysis Activities
  * 
- * 1.   The TRISC register is originally configured by the CHRP4_config()
- *      function, and controls the data direction (input or output) of the PORTC
- *      I/O pins. A value of 0 in any TRIS register bit position configures the
- *      pin to be an output (0 is like 'o', in output), while a value of 1 sets
- *      a pin as an input (1 is like 'i', in input).
+ * 1.   The microcontroller's TRISC register is configured by the CHRP4_config()
+ *      function and controls the data direction (input or output) of the PORTC
+ *      I/O pins. A value of 0 in any TRIS register bit configures the 
+ *      corresponding pin to be an output (think of 0 being like the 'o', in
+ *      output), while a value of 1 sets the pin as an input (1 is like the 'i',
+ *      in input).
  * 
- *      What is the original value of TRISC set in CHRP4_config? How would the
- *      statement:
+ *      What is the original value of TRISC set in the CHRP4_config() function?
+ *      How would the statement:
  * 
  *      TRISC = 0b00000000;
  * 
  *      in the main() function change the function of the PORTC I/O pins?
  * 
  * 2.   This program converts an analog input into an 8-bit digital value
- *      representing the input, and then outputs each bit of the digital value
- *      to the PIC16F1459 PORTC output pins. A voltmeter can be used to read the
- *      digital result directly from the pins, except for pins LATC2 and LATC3
- *      (pins 14 and 7 on the chip -- see the schematic for all of the pin
- *      numbers). The pins for LATC2 and LATC3 have been set as inputs in this
- *      program since they are usually connected to the Q1/Q3 and Q2/Q4 
- *      phototransistors on the CHRP4 circuit.
+ *      representing the input voltage, and then outputs each bit of the digital
+ *      value to the PIC16F1459 PORTC output pins. A voltmeter can be used to
+ *      read the digital result directly from the pins, except for pins LATC2
+ *      and LATC3 (pins 14 and 7 on the chip -- see the schematic for all of the
+ *      pin numbers). The pins for LATC2 and LATC3 are set as inputs since they
+ *      connect to the Q1/Q3 and Q2/Q4 phototransistors on the CHRP4 circuit.
  * 
  *      If your CHRP4 has its phototransistors installed, leave the TRISC
  *      register as set by the CHRP4_config() function. If the phototransistors
  *      are not installed, the TRISC register can be set to output digital data
- *      on all of the microcontrollers LATC pins by clearing it instead:
+ *      on all of the microcontrollers LATC pins by clearing it:
  
     TRISC = 0b00000000;
  
  *      Read the conversion result by connecting a voltmeter between ground (the
- *      negative BT1 pad, or one of the H1-H4 header pins opposite the one with
- *      the square pad on the circuit board, as shown by the ground symbol on
- *      the H1-H4 legend) and each microcontroller PORTC pin (see the schematic
- *      for the pinout and pin numbers).
+ *      negative BT1 pad, or one of the H1-H4 header pins marked with the ground
+ *      symbol on the H1-H4 legend on the circuit board) and each PORTC pin of
+ *      the microcontroller (see the schematic for the microcontroller pinout
+ *      and pin numbers).
  * 
  *      RC7 is the most significant bit of the result, and RC0 is the least
- *      significant bit. Starting at RC7, record all 8 bits of the analog
+ *      significant bit. Starting from RC7, record all 8 bits of the analog
  *      value, representing voltages close 5V as 1, and voltages near 0V as 0.
- *      What was your binary result? What is it when converted to decimal?
+ *      What was your binary result? What is the value when it is converted to
+ *      decimal?
  * 
- * 3.   The statement that outputs the digital value of the analog input to the
- *      microcontroller output pins is: LATC = rawADC;
+ * 3.   The 'LATC = rawADC;' statement in the program outputs the digital value
+ *      corresponding to the analog input to the microcontroller's output pins.
  * 
- *      Since the upper 4 bits of PORTC are also physically connected to LEDs
- *      D2-D5, the LEDs will light to represent these first four data bits as
- *      well. Do the lit LEDs match your measured result, above?
+ *      Since the 4 most significant bits of PORTC are also physically connected
+ *      to LEDs D2-D5 on the circuit, the LEDs will light to represent the first
+ *      four bits of data. Do the lit LEDs match your measured result, above?
  * 
- *      The lower 4 bits of the result can be displayed instead of the upper 4
- *      bits by using a bit shift operator to move the contents of the ADC
- *      conversion result four bits to the left before outputting the value to
- *      LATC. This essentially slides each bit four positions to its left. The
- *      upper 4 bits will be lost during this shift operation, as they are
- *      replaced by the lower 4 bits of the result, and the lowest four bits
- *      will be 'empty' or 0.
+ *      The lower 4 bits of the result can be displayed on the LEDs instead of
+ *      the upper 4 bits by using a bit shift operator to shift each bit in the
+ *      conversion result variable four bits to the left before outputting the
+ *      value to LATC. (The upper 4 bits will be lost when doing this shift.)
  * 
  *      Update the LATC expression to add the bit shift operator, below. Rebuild
  *      the program and run it again.
  * 
         LATC = rawADC << 4;     // Shift result 4 bits left to display low nybble
  * 
- *      The least significant bits of a conversion result will change the most
- *      quickly as an analog input voltage changes. If you are using the
- *      built-in temperature sensor as the input, try heating the
+ *      This is advantageious since the least significant bits of a conversion
+ *      result will change most often as an analog input voltage changes. If you
+ *      are using the built-in temperature sensor as the input, try heating the
  *      microcontroller with your touch, or by cradling the circuit board in
  *      your hands until you see one or more bits changing on the LEDs.
  * 
@@ -173,21 +173,21 @@ int main(void)
  * 
  *      (Amusingly, the microcontroller starts up from a reset with these pins
  *      configured as analog inputs already, and this programs's UBMP4_config()
- *      function reconfigures them as digital I/O. You can explore how this is
- *      done in the function.)
+ *      function reconfigures them as digital I/O. You can explore the function
+ *      to see how this is done.)
  * 
- * 5.   The 9 analog inputs in the PIC16F1459 can be connected into the single
- *      ADC (analog-to-digital coverter) one at a time through an analog
- *      multiplexer (or mux). After changing to a different input, a short delay
+ * 5.   One of the 9 analog inputs on the PIC16F1459 can be connected into the
+ *      single ADC (analog-to-digital coverter) through an analog multiplexer
+ *      (or mux). After switching the mux to a different input, a short delay
  *      is necessary to allow the input potential to 'settle' (by charging an
  *      internal capacitor to the new input voltage) before the conversion
- *      starts. The function call:
+ *      is started. The function call:
  * 
         ADC_select_channel(ANTIM);
  * 
  *      selects the microcontroller's on-board Temperature Indicator Module
  *      (ANTIM) as the ADC input, but does not add a settling delay. What other
- *      analog inputs are available on UBMP4? (Hint: see the UBMP420.h file)
+ *      analog inputs are available on CHRP4? (Hint: see the CHRP4.h file)
  * 
  *      The ADC_select_channel() function does not add a delay after switching
  *      a new input to the ADC, but there is another function that switches
@@ -197,51 +197,54 @@ int main(void)
  * 
  * 6.   This program contains the bin_to_dec() function which demonstrates a
  *      simple method of converting an 8-bit binary value to three decimal
- *      digits. Can you figure out how it works? Explain, or use a flow chart
- *      to describe its operation.
+ *      digits. Can you figure out how it works? Explain the function, or create
+ *      a flow chart to describe its operation.
  * 
- * 7.   Two serial data functions are included in the Simple-Serial.c file.
- *      These functions enable the program to output RS-232 formatted serial
- *      data on the H1 header pin. This allows a logic analyser or oscilloscope
- *      to read the value of the serial data more conveniently and quickly than
- *      by successivley probing each of the header pins using a voltmeter.
+ * 7.   The Simple-Serial.c file includes two serial functions: one to configure
+ *      a header I/O pin for serial output, and the second to write RS-232
+ *      formatted serial data to the H1 header pin. This will allow a logic
+ *      analyser or an oscilloscope to read the value of the serial data more
+ *      conveniently and quickly than by us successivley probing each of the
+ *      microcontroller output pins using a voltmeter.
  * 
  *      The format of the serial data is straightforward to understand. When no
  *      data is being transmitted, the serial line is 'idle', represented by a
- *      high voltage, or 1 logic level. (This is usually true at the TTL logic
- *      level, before an RS-232 level shifter ?? idle is usually a low voltage
- *      on the actual RS-232 data cable, after the level shifter.)
+ *      high voltage, or '1' logic level. (This is usually true at the circuit's
+ *      TTL logic level, but actual RS-232 transmission uses a level shifter to
+ *      make logic 1 a negative voltage. We'll use the circuit's TTL levels.)
  * 
  *      Every data transmission is preceeded by a low voltage, or logic 0 level
- *      Start bit. Next, the data bits themselves are transmitted in order from
- *      LSB (least-significant bit) to MSB (most-significant bit). The
- *      transmission is ended with a logic 1 level Stop bit.
+ *      'Start' bit. Next, the data bits themselves are transmitted in order
+ *      from LSB (least-significant bit) to MSB (most-significant bit). The
+ *      transmission is ended with a logic 1 level 'Stop' bit.
  * 
- *      Each data bit, 0 or 1, is transmitted at a low or high voltage level,
+ *      Each data bit, 0 or 1, is transmitted as a low or high voltage level,
  *      respectively, and each bit remains at its logic level for the entire bit
- *      duration (this is known as NRZ, or non-return-to-zero format). The bit
- *      duration is a reciprocal of the data rate. For example at the commonly-
- *      used 9600 bps (bits-per-second) data rate, each bit is 1/9600s, or
- *      roughly 104us (microseconds) in length.
+ *      duration (this is commonly known as NRZ, or non-return-to-zero format).
+ * 
+ *      The duration of each bit is a reciprocal of the data rate. For example
+ *      at the commonly-used 9600 bps (bits-per-second) data rate, each bit is
+ *      1/9600s, or roughly 104us (microseconds) in length.
  * 
  *      If you have access to an oscilloscope or logic analyzer, add the
  *      following code to the program (below the LATC output statement) to
  *      enable serial output. Then, probe H1 to view the serial data:
  
-        // Write ADC result to H1 as binary serial data
+        // Write the ADC result to H1 as binary serial data
         H1_serial_write(rawADC);
         
  *      Can you record or capture the digital serial data? What is the digital 
- *      equivalent of the analogue value that was transmitted?
+ *      value that was transmitted?
  * 
- * 8.   Rather than interpreting or converting the analogue value yourself, this
+ * 8.   Rather than interpreting or converting the binary value yourself, this
  *      next block of code can be added to your program to convert the analog
  *      result to three decimal digits, transmit each of the digits serially as
  *      ASCII characters, and add the character codes signifying the end of a
  *      line of text (CR) and the start of a new line of text (LF). Logic
  *      analysers or digital oscilloscopes may be able to decode these digits,
  *      or the output can also be connected to a serial terminal to display the
- *      text on screen.
+ *      text on screen. (Depending on the requirements of the serial terminal,
+ *      both of the CR and LF characters may not be needed.)
  
         // Convert ADC result to decimal and write each digit serially in ASCII
         bin_to_dec(rawADC);
@@ -252,14 +255,14 @@ int main(void)
         H1_serial_write(LF);            // Line feed character
                 
  * 
- * 9.   Both the H1_serial_config() function and the H1_serial_write() function
- *      make use of bit-wise AND (&) operators. Below is the AND operator used
- *      by the H1_serial_config() function:
+ * 9.   The ADC_select_channel(), ADC_read_channel(), H1_serial_config(), and
+ *      H1_serial_write() functions all make use of bit-wise logical operators.
+ *      Below is the AND (&) operator used by the H1_serial_config() function:
  * 
         TRISB = TRISB & 0b11101111;
  * 
  *      Can you determine what this statement is doing, and why an AND operation
- *      is being used instead of just over-writing the TRISB value? Explain.
+ *      is being used instead of just over-writing TRISB with a new value?
  * 
  * 10.  The data transmission loop of the H1_serial_write() function is shown
  *      below:
@@ -279,41 +282,53 @@ int main(void)
         data = data >> 1;   // Prepare next bit by shifting data right 1 bit
     }
  *  
- *      Explain how the AND operation used in the if condition can determine
- *      the state of the least significant data bit.
+ *      Explain how the AND operation used in the if condition in this function
+ *      can determine the state of the least significant data bit.
  * 
- *      After the least significant data bit is transmitted, how are the other
- *      seven bits in the data byte isolated and transmitted?
- *      
+ * 11.  The AND operation examined in 10, above, only tests the state of the
+ *      least significant bit of the data to be transmitted. How are the
+ *      remaining seven bits of the data transmitted in this same loop?
+ * 
+ * 12.  The ADC_select_channel() function uses the following two instructions to
+ *      switch the ADC's input mux to the selected analog input.
+ * 
+    ADCON0 = (ADCON0 & 0b10000011); // Clear channel select (CHS) bits by ANDing
+    ADCON0 = (ADCON0 | channel);	// Set channel by ORing with channel constant
+ * 
+ *      How will the ADCON0 register be changed after calling the function with
+ *      the ADQ2 definition from the CHRP4.h file?
  * 
  * Programming Activities
  * 
  * 1.   The bin_to_dec() function converts a single byte into three decimal
- *      digits. Step 8 in the program analysis activities, above, converted
- *      each of these numeric digits to the ASCII code representing the digit.
- *      Can you make a bin_to_ASCII() function that would eliminate the need
- *      for you to offset the values to ASCII separately, as was done here?
+ *      digits. Step 8 in the program analysis activities, above, converts each
+ *      of these numeric digits to the ASCII code representing the digit. Can
+ *      you make a similar bin_to_ASCII() function that would eliminate the need
+ *      to manually offset the values to ASCII as was done here?
  * 
  * 2.   Does your CHRP4 have Q1, Q2, Q3, or Q4 installed, along with one or
  *      more of LEDs L6, D7, or D8? If so, it may be easier to use the
  *      phototransistors as input devices instead of the temperature module.
- *      Un-comment the code to turn on one of the LEDs and to select the 
- *      phototransistor input. The example code uses D6 and Q1, but you should
- *      change this to refer to the components installed on your CHRP4 board:
+ *      Un-comment the statements to turn LED D6 on and to select the Q1
+ *      phototransistor input in the program code. (The example code uses D6 and
+ *      Q1, but you should change this to reflect to the components installed
+ *      on your CHRP4 board.)
  
     D6 = 1;                      // Turn on LED D6 to..
     ADC_select_channel(ANQ1);    // read the light level on Q1 or Q2
  
- *      Unfortuantely, it won't be easy to use a multimeter to measure the
- *      output on the microcontroller pins now because the LATC0 and LATC1
- *      output pins control power for both the LED and the phototransistor
- *      circuits, and writing output bits to these pins might turn the LEDs
- *      and phototransistors off! There is a way to bypass this problem by
- *      combining bit shift operations with logical operations so that the
- *      output data only goes to the D2-D5 LEDs on PORTC without affecting the
- *      other port pins. Replace the line 'LATC = rawADC;' in your program with
- *      the following lines of code to display the 8-bit data on the LEDs, 
- *      four bits at a time:
+ *      Unfortuantely, it won't be possible to use a multimeter to read the
+ *      result of the conversion from the microcontroller pins now because some
+ *      of the same output pins control power for both the LED and the
+ *      phototransistor circuits. Writing to these outputs might turn the LEDs
+ *      and phototransistors off! A serial device could be used for debugging,
+ *      but one may not be readily available.
+ * 
+ *      Fortunately, there is another way to display the output data on the
+ *      built-in LEDs without overwriting the port pins used to power the LED
+ *      and phototransistor circuits using logical operations. Replace the line
+ *      'LATC = rawADC;' in your program with the following lines of code to
+ *      display the 8-bit ADC data on the LEDs four bits at a time:
  
         // Output the ADC result on the LEDs 4bits at a time
         LATC = (LATC & 0b00001111) | (rawADC & 0b11110000);
@@ -323,54 +338,64 @@ int main(void)
         LATC = 0;
         __delay_ms(100);
 
- *      Can you figure out what the code is doing? The least-significant four
- *      bits of the rawADC value cannot be allowed to interfere with the
- *      inputs and outputs on the RC0-RC3 pins of PORTC. This is accomplished
- *      by the AND operation on the right side of each LATC assignment statement
- *      in the code above. The remaining rawADC data is written into the cleared
- *      LATC bits -- cleared by the left side AND operation in the assigment
- *      statements -- by using an OR operation. Using logical AND and OR
- *      operators allows selective modification of groups of bits within
- *      larger registers.
+ *      Can you figure out how these statements work? Map out their operation
+ *      and verify that none of the data on the least significant four pins of
+ *      PORTC (RC0 - RC3) are changed by this code.
  * 
- *      Of course, a serial output can be used instead of this code to read the
- *      Q1 - Q4 phototransistor output values, but this example shows how you
- *      can make the most of limited output resources (only 4 LEDs!) to read
- *      any 8-bit (or larger, with more code) values.
+ *      Using logical AND and OR operators allows the selective modification of
+ *      any bit(s) within memory registers and is a powerful technique to
+ *      understand.
  * 
- *      Create a program to implement threshold detection and to light an LED
- *      when that threshold is crossed. Start by determining the analog level
- *      corresponding to low intensities of light and the level representing
- *      bright light. Use conditional instructions to light an LED when the
- *      light level rises above the bright threshold and drops below the dark
- *      threshold set in your program. Can you think of a reason why two 
- *      different light thresholds would be better than one? What other types
- *      of electronic devices or circuits work this way?
+ * 3.   Create a program to light an LED when a specific light threshold is
+ *      crossed. Start by determining the analog output level corresponding
+ *      a medium intensity of light using either the code modifications from
+ *      step 2, above, or a serial decoder.
  * 
- * 3.   Create a program that produces a PWM output proportional to an analog
- *      input, or a program that creates a tone having a pitch proportional
- *      to an analog input value.
+ *      Next, set bright and dark thresholds that are a few steps above and
+ *      below the number measured as your medium light level. This implements
+ *      a simple form of hysteresis (a separation between the getting-brighter
+ *      and getting-darker transitions) to ensure more accurate destinction of
+ *      light and dark. 
  * 
- * 4.   If you have an oscilloscope available, investigate how fast you can get
+ *      Then, write the program so that an LED turn on when the sensed light
+ *      is brighter than the bright level, and turn off when the sensed light
+ *      is darker than the dark level.
+ * 
+ * 4.   Analog input values can be fed directly into output processes. Create a
+ *      program that produces a PWM output proportional to an analog value, or
+ *      that creates a tone having a pitch proportional to an analog value.
+ * 
+ * 5.   If you have an oscilloscope available, investigate how fast you can get
  *      the serial output function to transmit data. Try setting the bit delays
  *      inside the serial write function to 1 microsecond of delay, instead of
  *      104 and 103 as used in the current function, and try the program. Does
  *      it work the way it should? Is each bit actually 1us in duration? What do
- *      you think would make them different if the bits are not 1us long?
+ *      you think is affecting the length of the bits?
  * 
- * 5.   Creating a serial data transmission function is relatively straight-
- *      forward. Receiving serial data can be done in a very similar way.
- *      Think about how you would create a function to receive serial data. How
- *      could you ensure that the data is received correctly even if there are
- *      slight clock timing differences between the microcontrollers in the
- *      transmitting and receiving devices? Create the pseudocode or a flowchart
- *      describing a serial receive function.
+ * 6.   Creating a serial data transmission function is relatively straight-
+ *      forward since the bits are simply output sequentially. Receiving serial
+ *      data reliably can be done in a very similar way but needs to account for
+ *      possible differences in clock timing between the transmitting and
+ *      receving microcontrollers. Think about how you would create a function
+ *      to receive serial data that takes slight clock timing differences into
+ *      account. Create the pseudocode or a flowchart describing a serial
+ *      receive function.
  * 
- * 6.   In this program, transmitting serial data involves isolating one bit
- *      of a variable using a bit-wise logical operator, and bit-shifting the
- *      data into place within a loop (and doing it at the proper bit timing,
- *      of course). Received serial data bits can be re-assembled into an 8-bit
- *      variable using a similar technique. Try to create a function, or just
- *      its main code loop, that would successively read serial data bits from
- *      an input pin and assemble the values into an 8-bit variable.
+ * 7.   Transmitting serial data in this program involves isolating one bit of
+ *      a variable at a time using a bit-wise logical operator, outputting the 
+ *      bit for the proper time, bit-shifting the data, and repeating the entire
+ *      process for the remainder of the data bits. Receving serial data happens
+ *      in the opposite way, first sensing and validating each bit, and then
+ *      re-assembling the bits by shifting them into a variable, and repeating
+ *      the process until all of the bits have been received.
+ * 
+ *      Try to create a function, or just the main code loop of a function, that
+ *      successively reads serial data bits from an input pin and assembles the
+ *      values into an 8-bit variable.
+ * 
+ * 8.   Microcontrollers such as the PIC16F1459 used in this circuit have built-
+ *      in EUSART hardware to transmit and receive serial data without using
+ *      software functions. What would the advantage of using the EUSART to
+ *      transmit or receive serial data be? Why do you think it was not used in
+ *      these examples for this circuit?
  */
